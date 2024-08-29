@@ -5,16 +5,23 @@
 
 Order orders[MAX_ORDERS];
 
+void print_orders() {
+    for (int i = 0; i < MAX_ORDERS; i++) {
+        printf("Order Slot %d: Order Number = %d, Status = %d\n", i, orders[i].order_number, orders[i].status);
+    }
+}
+
 void save_order_statuses() {
     FILE *file = fopen(STATUS_FILE, "w");
     if (file != NULL) {
+        printf("Saving order statuses to file.\n");
         for (int i = 0; i < MAX_ORDERS; i++) {
             if (orders[i].order_number != -1) {
                 fprintf(file, "%d %d\n", orders[i].order_number, orders[i].status);
+                printf("Saved order %d with status %d to file.\n", orders[i].order_number, orders[i].status);
             }
         }
         fclose(file);
-        printf("Saved order statuses to file.\n");
     } else {
         printf("Failed to open file for saving order statuses.\n");
     }
@@ -44,7 +51,7 @@ void load_order_statuses() {
         }
         fclose(file);
     } else {
-        printf("Failed to open file for loading order statuses.\n");
+        printf("File not found or failed to open for loading order statuses.\n");
     }
 }
 
@@ -53,8 +60,12 @@ void initialize_orders() {
         orders[i].order_number = -1; // Initialize with invalid order number
         orders[i].status = DRAWING;  // Default status
     }
+    printf("After initialization:\n");
+    print_orders(); // Print the order array after initialization
     load_order_statuses(); // Load existing orders from file
+    printf("Orders initialized.\n");
 }
+
 
 Order* find_order(int order_number) {
     for (int i = 0; i < MAX_ORDERS; i++) {
@@ -67,6 +78,7 @@ Order* find_order(int order_number) {
 
 void create_order(int order_number) {
     printf("Attempting to create order %d.\n", order_number);
+    print_orders();  // Print the current status of all orders
     Order* order = find_order(order_number);
     if (order != NULL) {
         printf("Order %d already exists!\n", order_number);
@@ -77,6 +89,7 @@ void create_order(int order_number) {
                 orders[i].status = DRAWING;  // New orders start with DRAWING status
                 save_order_statuses();
                 printf("Order %d created with status DRAWING\n", order_number);
+                print_orders();  // Print the status after the order is created
                 return;
             }
         }
@@ -105,4 +118,19 @@ OrderStatus get_order_status(int order_number) {
     }
     printf("Order %d not found.\n", order_number);
     return -1;
+}
+
+void reset_orders() {
+    for (int i = 0; i < MAX_ORDERS; i++) {
+        orders[i].order_number = -1;
+        orders[i].status = DRAWING;
+    }
+    printf("Orders reset.\n");
+    print_orders();
+}
+
+
+int main() {
+    initialize_orders(); // Ensure this works correctly
+    return 0;
 }
