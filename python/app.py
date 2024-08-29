@@ -18,25 +18,6 @@ order_status_lib.update_order_status.restype = None
 order_status_lib.create_order.argtypes = [ctypes.c_int]
 order_status_lib.create_order.restype = None
 
-class OrderStatus:
-    DRAWING = 0
-    COLLECTING_MATERIALS = 1
-    CUTTING = 2
-    CLEANING_ARRANGING = 3
-    COUNTING_PREPARATION = 4
-    SHIPPING_FINISHED = 5
-    FINISHED = 6
-
-status_dict = {
-    OrderStatus.DRAWING: "Drawing",
-    OrderStatus.COLLECTING_MATERIALS: "Collecting Materials",
-    OrderStatus.CUTTING: "Cutting",
-    OrderStatus.CLEANING_ARRANGING: "Cleaning & Arranging",
-    OrderStatus.COUNTING_PREPARATION: "Counting & Preparation",
-    OrderStatus.SHIPPING_FINISHED: "Shipping & Finished",
-    OrderStatus.FINISHED: "Finished"
-}
-
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -45,27 +26,50 @@ def index():
 def customer():
     if request.method == 'POST':
         order_number = int(request.form['order_number'])
+        print(f"[DEBUG] Customer checking order number: {order_number}")
         order_status_lib.load_order_statuses()  # Reload orders from file
         status_code = order_status_lib.get_order_status(order_number)
+        status_dict = {
+            0: "Drawing",
+            1: "Collecting Materials",
+            2: "Cutting",
+            3: "Cleaning & Arranging",
+            4: "Counting & Preparation",
+            5: "Shipping & Finished",
+            6: "Finished",
+            -1: "Unknown Status"
+        }
         status = status_dict.get(status_code, "Unknown Status")
+        print(f"[DEBUG] Retrieved status: {status}")
         return render_template('customer.html', status=status)
     return render_template('customer.html')
-
 
 @app.route('/employee', methods=['GET', 'POST'])
 def employee():
     if request.method == 'POST':
         action = request.form['action']
         order_number = int(request.form['order_number'])
+        print(f"[DEBUG] Employee selected action: {action} for order number: {order_number}")
 
         if action == "Create Order":
+            print(f"[DEBUG] Attempting to create order {order_number}")
             order_status_lib.create_order(order_number)
         elif action == "Update Order":
             status = int(request.form['status'])
+            print(f"[DEBUG] Attempting to update order {order_number} to status {status}")
             order_status_lib.update_order_status(order_number, status)
 
         return redirect(url_for('employee'))
 
+    status_dict = {
+        0: "Drawing",
+        1: "Collecting Materials",
+        2: "Cutting",
+        3: "Cleaning & Arranging",
+        4: "Counting & Preparation",
+        5: "Shipping & Finished",
+        6: "Finished"
+    }
     return render_template('employee.html', status_dict=status_dict)
 
 if __name__ == '__main__':

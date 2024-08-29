@@ -14,6 +14,9 @@ void save_order_statuses() {
             }
         }
         fclose(file);
+        printf("Saved order statuses to file.\n");
+    } else {
+        printf("Failed to open file for saving order statuses.\n");
     }
 }
 
@@ -22,7 +25,9 @@ void load_order_statuses() {
     if (file != NULL) {
         int order_number;
         int status;
+        printf("Loading order statuses from file.\n");
         while (fscanf(file, "%d %d", &order_number, &status) != EOF) {
+            printf("Loaded order %d with status %d from file.\n", order_number, status);
             Order *order = find_order(order_number);
             if (order != NULL) {
                 order->order_number = order_number;
@@ -38,6 +43,8 @@ void load_order_statuses() {
             }
         }
         fclose(file);
+    } else {
+        printf("Failed to open file for loading order statuses.\n");
     }
 }
 
@@ -59,6 +66,7 @@ Order* find_order(int order_number) {
 }
 
 void create_order(int order_number) {
+    printf("Attempting to create order %d.\n", order_number);
     Order* order = find_order(order_number);
     if (order != NULL) {
         printf("Order %d already exists!\n", order_number);
@@ -77,6 +85,7 @@ void create_order(int order_number) {
 }
 
 void update_order_status(int order_number, OrderStatus status) {
+    printf("Attempting to update order %d to status %d.\n", order_number, status);
     Order* order = find_order(order_number);
     if (order != NULL) {
         order->status = status;
@@ -88,9 +97,12 @@ void update_order_status(int order_number, OrderStatus status) {
 }
 
 OrderStatus get_order_status(int order_number) {
+    printf("Attempting to get status for order %d.\n", order_number);
     Order* order = find_order(order_number);
     if (order != NULL) {
+        printf("Order %d is in status %d.\n", order_number, order->status);
         return order->status;
     }
+    printf("Order %d not found.\n", order_number);
     return -1;
 }
