@@ -15,8 +15,7 @@ order_status_lib.get_order_status.restype = ctypes.c_int
 order_status_lib.update_order_status.argtypes = [ctypes.c_int, ctypes.c_int]
 order_status_lib.update_order_status.restype = None
 
-order_status_lib.create_order.argtypes = [ctypes.c_int]
-order_status_lib.create_order.restype = None
+order_status_lib.create_order.restype = ctypes.c_int
 
 @app.route('/')
 def index():
@@ -27,7 +26,6 @@ def customer():
     if request.method == 'POST':
         order_number = int(request.form['order_number'])
         print(f"[DEBUG] Customer checking order number: {order_number}")
-        order_status_lib.load_order_statuses()  # Reload orders from file
         status_code = order_status_lib.get_order_status(order_number)
         status_dict = {
             0: "Drawing",
@@ -48,13 +46,17 @@ def customer():
 def employee():
     if request.method == 'POST':
         action = request.form['action']
-        order_number = int(request.form['order_number'])
-        print(f"[DEBUG] Employee selected action: {action} for order number: {order_number}")
+        print(f"[DEBUG] Employee selected action: {action}")
 
         if action == "Create Order":
-            print(f"[DEBUG] Attempting to create order {order_number}")
-            order_status_lib.create_order(order_number)
+            print(f"[DEBUG] Attempting to create order")
+            new_order_number = order_status_lib.create_order()
+            if new_order_number != -1:
+                print(f"[DEBUG] Order {new_order_number} created successfully")
+            else:
+                print(f"[DEBUG] Failed to create order")
         elif action == "Update Order":
+            order_number = int(request.form['order_number'])
             status = int(request.form['status'])
             print(f"[DEBUG] Attempting to update order {order_number} to status {status}")
             order_status_lib.update_order_status(order_number, status)

@@ -66,7 +66,6 @@ void initialize_orders() {
     printf("Orders initialized.\n");
 }
 
-
 Order* find_order(int order_number) {
     for (int i = 0; i < MAX_ORDERS; i++) {
         if (orders[i].order_number == order_number) {
@@ -76,25 +75,32 @@ Order* find_order(int order_number) {
     return NULL;
 }
 
-void create_order(int order_number) {
-    printf("Attempting to create order %d.\n", order_number);
-    print_orders();  // Print the current status of all orders
-    Order* order = find_order(order_number);
-    if (order != NULL) {
-        printf("Order %d already exists!\n", order_number);
-    } else {
-        for (int i = 0; i < MAX_ORDERS; i++) {
-            if (orders[i].order_number == -1) {
-                orders[i].order_number = order_number;
-                orders[i].status = DRAWING;  // New orders start with DRAWING status
-                save_order_statuses();
-                printf("Order %d created with status DRAWING\n", order_number);
-                print_orders();  // Print the status after the order is created
-                return;
-            }
+int generate_new_order_number() {
+    int max_order_number = 0;
+    for (int i = 0; i < MAX_ORDERS; i++) {
+        if (orders[i].order_number > max_order_number) {
+            max_order_number = orders[i].order_number;
         }
-        printf("Failed to create order. Maximum number of orders reached.\n");
     }
+    return max_order_number + 1;
+}
+
+int create_order() {
+    int new_order_number = generate_new_order_number();
+    printf("Attempting to create order %d.\n", new_order_number);
+    print_orders();  // Print the current status of all orders
+    for (int i = 0; i < MAX_ORDERS; i++) {
+        if (orders[i].order_number == -1) {
+            orders[i].order_number = new_order_number;
+            orders[i].status = DRAWING;  // New orders start with DRAWING status
+            save_order_statuses();
+            printf("Order %d created with status DRAWING\n", new_order_number);
+            print_orders();  // Print the status after the order is created
+            return new_order_number;
+        }
+    }
+    printf("Failed to create order. Maximum number of orders reached.\n");
+    return -1;
 }
 
 void update_order_status(int order_number, OrderStatus status) {
@@ -128,7 +134,6 @@ void reset_orders() {
     printf("Orders reset.\n");
     print_orders();
 }
-
 
 int main() {
     initialize_orders(); // Ensure this works correctly

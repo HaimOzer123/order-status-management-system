@@ -22,5 +22,6 @@ void initialize_orders();
 Order* find_order(int order_number);
 void update_order_status(int order_number, OrderStatus status);
 OrderStatus get_order_status(int order_number);
+int create_order();
 
 #endif
