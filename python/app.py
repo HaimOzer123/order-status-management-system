@@ -42,6 +42,7 @@ def index():
 def customer():
     if request.method == 'POST':
         order_number = int(request.form['order_number'])
+        order_status_lib.load_order_statuses()  # Load the latest statuses
         status_code = order_status_lib.get_order_status(order_number)
         status = status_dict.get(status_code, "Unknown Status")
         return render_template('customer.html', status=status)
