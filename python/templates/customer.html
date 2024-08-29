@@ -3,6 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <title>Customer Portal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        .status-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .status-icon {
+            margin-right: 10px;
+        }
+        .status {
+            display: flex;
+            align-items: center;
+        }
+        .red-dot {
+            width: 10px;
+            height: 10px;
+            background-color: red;
+            border-radius: 50%;
+            margin-left: 10px;
+        }
+        .inactive-dot {
+            background-color: lightgray;
+        }
+    </style>
 </head>
 <body>
     <h1>Check Order Status</h1>
@@ -11,8 +36,36 @@
         <input type="number" id="order_number" name="order_number" required>
         <button type="submit">Check Status</button>
     </form>
+
     {% if status %}
-        <p>Current Status: {{ status }}</p>
+        <div class="status-container">
+            <div class="status-icon"><i class="fas fa-pencil-alt"></i></div>
+            <div class="status">Drawing <div class="red-dot {% if status != 'Drawing' %}inactive-dot{% endif %}"></div></div>
+        </div>
+        <div class="status-container">
+            <div class="status-icon"><i class="fas fa-box"></i></div>
+            <div class="status">Collecting Materials <div class="red-dot {% if status != 'Collecting Materials' %}inactive-dot{% endif %}"></div></div>
+        </div>
+        <div class="status-container">
+            <div class="status-icon"><i class="fas fa-cut"></i></div>
+            <div class="status">Cutting <div class="red-dot {% if status != 'Cutting' %}inactive-dot{% endif %}"></div></div>
+        </div>
+        <div class="status-container">
+            <div class="status-icon"><i class="fas fa-broom"></i></div>
+            <div class="status">Cleaning & Arranging <div class="red-dot {% if status != 'Cleaning & Arranging' %}inactive-dot{% endif %}"></div></div>
+        </div>
+        <div class="status-container">
+            <div class="status-icon"><i class="fas fa-clipboard-check"></i></div>
+            <div class="status">Counting & Preparation <div class="red-dot {% if status != 'Counting & Preparation' %}inactive-dot{% endif %}"></div></div>
+        </div>
+        <div class="status-container">
+            <div class="status-icon"><i class="fas fa-shipping-fast"></i></div>
+            <div class="status">Shipping & Finished <div class="red-dot {% if status != 'Shipping & Finished' %}inactive-dot{% endif %}"></div></div>
+        </div>
+        <div class="status-container">
+            <div class="status-icon"><i class="fas fa-check-circle"></i></div>
+            <div class="status">Finished <div class="red-dot {% if status != 'Finished' %}inactive-dot{% endif %}"></div></div>
+        </div>
     {% endif %}
 </body>
 </html>

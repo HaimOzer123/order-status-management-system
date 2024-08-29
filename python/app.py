@@ -15,8 +15,6 @@ order_status_lib.get_order_status.restype = ctypes.c_int
 order_status_lib.update_order_status.argtypes = [ctypes.c_int, ctypes.c_int]
 order_status_lib.update_order_status.restype = None
 
-order_status_lib.create_order.restype = ctypes.c_int
-
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -45,22 +43,10 @@ def customer():
 @app.route('/employee', methods=['GET', 'POST'])
 def employee():
     if request.method == 'POST':
-        action = request.form['action']
-        print(f"[DEBUG] Employee selected action: {action}")
-
-        if action == "Create Order":
-            print(f"[DEBUG] Attempting to create order")
-            new_order_number = order_status_lib.create_order()
-            if new_order_number != -1:
-                print(f"[DEBUG] Order {new_order_number} created successfully")
-            else:
-                print(f"[DEBUG] Failed to create order")
-        elif action == "Update Order":
-            order_number = int(request.form['order_number'])
-            status = int(request.form['status'])
-            print(f"[DEBUG] Attempting to update order {order_number} to status {status}")
-            order_status_lib.update_order_status(order_number, status)
-
+        order_number = int(request.form['order_number'])
+        status = int(request.form['status'])
+        print(f"[DEBUG] Attempting to update order {order_number} to status {status}")
+        order_status_lib.update_order_status(order_number, status)
         return redirect(url_for('employee'))
 
     status_dict = {

@@ -5,36 +5,19 @@
     <title>Employee Portal</title>
 </head>
 <body>
-    <h1>Employee Portal</h1>
+    <h1>Employee Portal - Update Order Status</h1>
     <form method="post">
-        <label for="action">Action:</label>
-        <select id="action" name="action" required>
-            <option value="Create Order">Create Order</option>
-            <option value="Update Order">Update Order</option>
+        <label for="order_number">Order Number:</label>
+        <input type="number" id="order_number" name="order_number" required>
+        
+        <label for="status">New Status:</label>
+        <select id="status" name="status" required>
+            {% for value, label in status_dict.items() %}
+                <option value="{{ value }}">{{ label }}</option>
+            {% endfor %}
         </select>
 
-        <div id="update_section" style="display: none;">
-            <label for="order_number">Order Number:</label>
-            <input type="number" id="order_number" name="order_number" required>
-            <label for="status">New Status:</label>
-            <select id="status" name="status">
-                {% for value, label in status_dict.items() %}
-                    <option value="{{ value }}">{{ label }}</option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <button type="submit">Submit</button>
+        <button type="submit">Update Status</button>
     </form>
-
-    <script>
-        document.getElementById('action').addEventListener('change', function() {
-            if (this.value == "Update Order") {
-                document.getElementById('update_section').style.display = 'block';
-            } else {
-                document.getElementById('update_section').style.display = 'none';
-            }
-        });
-    </script>
 </body>
 </html>
