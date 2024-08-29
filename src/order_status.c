@@ -41,7 +41,6 @@ void load_order_statuses() {
     }
 }
 
-
 void initialize_orders() {
     for (int i = 0; i < MAX_ORDERS; i++) {
         orders[i].order_number = -1; // Initialize with invalid order number
@@ -50,7 +49,6 @@ void initialize_orders() {
     load_order_statuses(); // Load existing orders from file
 }
 
-
 Order* find_order(int order_number) {
     for (int i = 0; i < MAX_ORDERS; i++) {
         if (orders[i].order_number == order_number) {
@@ -58,6 +56,24 @@ Order* find_order(int order_number) {
         }
     }
     return NULL;
+}
+
+void create_order(int order_number) {
+    Order* order = find_order(order_number);
+    if (order != NULL) {
+        printf("Order %d already exists!\n", order_number);
+    } else {
+        for (int i = 0; i < MAX_ORDERS; i++) {
+            if (orders[i].order_number == -1) {
+                orders[i].order_number = order_number;
+                orders[i].status = DRAWING;  // New orders start with DRAWING status
+                save_order_statuses();
+                printf("Order %d created with status DRAWING\n", order_number);
+                return;
+            }
+        }
+        printf("Failed to create order. Maximum number of orders reached.\n");
+    }
 }
 
 void update_order_status(int order_number, OrderStatus status) {
@@ -74,22 +90,7 @@ void update_order_status(int order_number, OrderStatus status) {
 OrderStatus get_order_status(int order_number) {
     Order* order = find_order(order_number);
     if (order != NULL) {
-        printf("Found order number: %d with status: %d\n", order_number, order->status);
         return order->status;
     }
-    printf("Order not found when retrieving status for order number: %d\n", order_number);
     return -1;
-}
-
-// create a main int function to the code
-int main() {
-    initialize_orders();
-    update_order_status(1001, COLLECTING_MATERIALS);
-    update_order_status(1002, CUTTING);
-    update_order_status(1003, CLEANING_ARRANGING);
-    update_order_status(1004, COUNTING_PREPARATION);
-    update_order_status(1005, SHIPPING_FINISHED);
-    update_order_status(1006, FINISHED);
-    save_order_statuses(); // Save orders to file
-    return 0;
 }

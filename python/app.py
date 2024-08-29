@@ -1,6 +1,6 @@
 import ctypes
 import os
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, redirect, url_for
 
 app = Flask(__name__)
 
@@ -14,6 +14,9 @@ order_status_lib.get_order_status.restype = ctypes.c_int
 
 order_status_lib.update_order_status.argtypes = [ctypes.c_int, ctypes.c_int]
 order_status_lib.update_order_status.restype = None
+
+order_status_lib.create_order.argtypes = [ctypes.c_int]
+order_status_lib.create_order.restype = None
 
 class OrderStatus:
     DRAWING = 0
@@ -44,22 +47,26 @@ def customer():
         order_number = int(request.form['order_number'])
         order_status_lib.load_order_statuses()  # Reload orders from file
         status_code = order_status_lib.get_order_status(order_number)
-        print(f"Retrieved status code: {status_code} for order number: {order_number}")  # Debug statement
         status = status_dict.get(status_code, "Unknown Status")
-        print(f"Status: {status}")  # Debug statement
         return render_template('customer.html', status=status)
     return render_template('customer.html')
-
 
 
 @app.route('/employee', methods=['GET', 'POST'])
 def employee():
     if request.method == 'POST':
+        action = request.form['action']
         order_number = int(request.form['order_number'])
-        status = int(request.form['status'])
-        order_status_lib.update_order_status(order_number, status)
-        return "Status updated"
-    return render_template('employee.html')
+
+        if action == "Create Order":
+            order_status_lib.create_order(order_number)
+        elif action == "Update Order":
+            status = int(request.form['status'])
+            order_status_lib.update_order_status(order_number, status)
+
+        return redirect(url_for('employee'))
+
+    return render_template('employee.html', status_dict=status_dict)
 
 if __name__ == '__main__':
     app.run(debug=True)
