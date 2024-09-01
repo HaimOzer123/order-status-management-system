@@ -29,9 +29,11 @@ This project implements a computerized order status management system, providing
         Employee Portal: http://127.0.0.1:5000/employee
 ----------------------------------------------------------------
 
-# Here is a screenshot of the application:
-![Application Screenshot](./images/Screenshot 2024-08-29 184736.png)
-![Application Screenshot](./images/Screenshot 2024-08-29 184811.png)
+## Project Screenshots
+Here are some screenshots of the application:
+
+- [Screenshot 1](https://drive.google.com/file/d/1S-4Hm0_N4YQVRjPVfZNqKjg2703AWLvq/view?usp=sharing)
+- [Screenshot 2](https://drive.google.com/file/d/1NcwJhst7dhArs0Pg2oVplvkdRkvm6eiL/view?usp=sharing)
 
 
 ### Key Points:
