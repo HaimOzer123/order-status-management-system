@@ -1,143 +1,136 @@
 #include <stdio.h>
+#include <sqlite3.h>
 #include "order_status.h"
 
-#define STATUS_FILE "order_statuses.txt"
+sqlite3 *db;
 
-Order orders[MAX_ORDERS];
-
-void print_orders() {
-    for (int i = 0; i < MAX_ORDERS; i++) {
-        printf("Order Slot %d: Order Number = %d, Status = %d\n", i, orders[i].order_number, orders[i].status);
-    }
-}
-
-void save_order_statuses() {
-    FILE *file = fopen(STATUS_FILE, "w"); // Open the file in write mode
-    if (file != NULL) {
-        printf("Saving order statuses to file.\n");
-        for (int i = 0; i < MAX_ORDERS; i++) {
-            if (orders[i].order_number > 0) { // Only write orders with a valid positive order number
-                fprintf(file, "%d %d\n", orders[i].order_number, orders[i].status);
-                printf("Saved order %d with status %d to file.\n", orders[i].order_number, orders[i].status);
-            }
-        }
-        fclose(file); // Close the file after writing
-    } else {
-        printf("Failed to open file for saving order statuses.\n");
-    }
-}
-
-
-
-void load_order_statuses() {
-    FILE *file = fopen(STATUS_FILE, "r");
-    if (file != NULL) {
-        int order_number;
-        int status;
-        printf("Loading order statuses from file.\n");
-        while (fscanf(file, "%d %d", &order_number, &status) != EOF) {
-            printf("Loaded order %d with status %d from file.\n", order_number, status);
-            Order *order = find_order(order_number);
-            if (order != NULL) {
-                order->order_number = order_number;
-                order->status = status;
-            } else {
-                for (int i = 0; i < MAX_ORDERS; i++) {
-                    if (orders[i].order_number == -1) {
-                        orders[i].order_number = order_number;
-                        orders[i].status = status;
-                        break;
-                    }
-                }
-            }
-        }
-        fclose(file);
-    } else {
-        printf("File not found or failed to open for loading order statuses.\n");
-    }
-}
-
+// Function to initialize the SQLite database and create the orders table if it doesn't exist
 void initialize_orders() {
-    for (int i = 0; i < MAX_ORDERS; i++) {
-        orders[i].order_number = -1; // Initialize with invalid order number
-        orders[i].status = DRAWING;  // Default status
+    int rc = sqlite3_open("order_statuses.db", &db);
+    if (rc) {
+        fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
+        return;
+    } else {
+        printf("Opened database successfully\n");
     }
-    printf("After initialization:\n");
-    print_orders(); // Print the order array after initialization
-    load_order_statuses(); // Load existing orders from file
-    printf("Orders initialized.\n");
+
+    const char *sql_create_table = 
+        "CREATE TABLE IF NOT EXISTS orders ("
+        "order_number INTEGER PRIMARY KEY,"
+        "status INTEGER NOT NULL);";
+
+    char *err_msg = 0;
+    rc = sqlite3_exec(db, sql_create_table, 0, 0, &err_msg);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "SQL error: %s\n", err_msg);
+        sqlite3_free(err_msg);
+    } else {
+        printf("Table 'orders' is ready.\n");
+    }
 }
 
-Order* find_order(int order_number) {
-    for (int i = 0; i < MAX_ORDERS; i++) {
-        if (orders[i].order_number == order_number) {
-            return &orders[i];
-        }
-    }
-    return NULL;
-}
-
+// Function to generate a new unique order number
 int generate_new_order_number() {
+    const char *sql_max_order = "SELECT MAX(order_number) FROM orders;";
+    sqlite3_stmt *stmt;
+    int rc = sqlite3_prepare_v2(db, sql_max_order, -1, &stmt, 0);
+
     int max_order_number = 0;
-    for (int i = 0; i < MAX_ORDERS; i++) {
-        if (orders[i].order_number > max_order_number) {
-            max_order_number = orders[i].order_number;
+    if (rc == SQLITE_OK) {
+        if (sqlite3_step(stmt) == SQLITE_ROW) {
+            max_order_number = sqlite3_column_int(stmt, 0);
         }
+    } else {
+        fprintf(stderr, "Failed to retrieve max order number: %s\n", sqlite3_errmsg(db));
     }
+
+    sqlite3_finalize(stmt);
     return max_order_number + 1;
 }
 
+// Function to create a new order
 int create_order() {
     int new_order_number = generate_new_order_number();
     printf("Attempting to create order %d.\n", new_order_number);
-    print_orders();  // Print the current status of all orders
-    for (int i = 0; i < MAX_ORDERS; i++) {
-        if (orders[i].order_number == -1) {
-            orders[i].order_number = new_order_number;
-            orders[i].status = DRAWING;  // New orders start with DRAWING status
-            save_order_statuses();
-            printf("Order %d created with status DRAWING\n", new_order_number);
-            print_orders();  // Print the status after the order is created
-            return new_order_number;
-        }
+
+    const char *sql_insert = "INSERT INTO orders (order_number, status) VALUES (?, ?);";
+    sqlite3_stmt *stmt;
+    int rc = sqlite3_prepare_v2(db, sql_insert, -1, &stmt, 0);
+
+    if (rc == SQLITE_OK) {
+        sqlite3_bind_int(stmt, 1, new_order_number);
+        sqlite3_bind_int(stmt, 2, DRAWING);
+        sqlite3_step(stmt);
+        printf("Order %d created with status DRAWING.\n", new_order_number);
+    } else {
+        fprintf(stderr, "Failed to create order: %s\n", sqlite3_errmsg(db));
     }
-    printf("Failed to create order. Maximum number of orders reached.\n");
-    return -1;
+
+    sqlite3_finalize(stmt);
+    return new_order_number;
 }
 
+// Function to update the status of an existing order
 void update_order_status(int order_number, OrderStatus status) {
     printf("Attempting to update order %d to status %d.\n", order_number, status);
-    Order* order = find_order(order_number);
-    if (order != NULL) {
-        order->status = status;
-        save_order_statuses();  // Persist the updated status
-        printf("Order %d updated to status %d\n", order_number, status);
+
+    const char *sql_update = "UPDATE orders SET status = ? WHERE order_number = ?;";
+    sqlite3_stmt *stmt;
+    int rc = sqlite3_prepare_v2(db, sql_update, -1, &stmt, 0);
+
+    if (rc == SQLITE_OK) {
+        sqlite3_bind_int(stmt, 1, status);
+        sqlite3_bind_int(stmt, 2, order_number);
+        sqlite3_step(stmt);
+        printf("Order %d updated to status %d.\n", order_number, status);
     } else {
-        printf("Order not found! Attempted to update order number: %d\n", order_number);
+        fprintf(stderr, "Failed to update order: %s\n", sqlite3_errmsg(db));
     }
+
+    sqlite3_finalize(stmt);
 }
 
+// Function to get the status of an existing order
 OrderStatus get_order_status(int order_number) {
     printf("Attempting to get status for order %d.\n", order_number);
-    Order* order = find_order(order_number);
-    if (order != NULL) {
-        printf("Order %d is in status %d.\n", order_number, order->status);
-        return order->status;
+
+    const char *sql_select = "SELECT status FROM orders WHERE order_number = ?;";
+    sqlite3_stmt *stmt;
+    int rc = sqlite3_prepare_v2(db, sql_select, -1, &stmt, 0);
+
+    OrderStatus status = -1;
+    if (rc == SQLITE_OK) {
+        sqlite3_bind_int(stmt, 1, order_number);
+        if (sqlite3_step(stmt) == SQLITE_ROW) {
+            status = sqlite3_column_int(stmt, 0);
+            printf("Order %d is in status %d.\n", order_number, status);
+        } else {
+            printf("Order %d not found.\n", order_number);
+        }
+    } else {
+        fprintf(stderr, "Failed to get order status: %s\n", sqlite3_errmsg(db));
     }
-    printf("Order %d not found.\n", order_number);
-    return -1;
+
+    sqlite3_finalize(stmt);
+    return status;
 }
 
+// Function to reset all orders (for testing purposes)
 void reset_orders() {
-    for (int i = 0; i < MAX_ORDERS; i++) {
-        orders[i].order_number = -1;
-        orders[i].status = DRAWING;
+    const char *sql_reset = "DELETE FROM orders;";
+    char *err_msg = 0;
+    int rc = sqlite3_exec(db, sql_reset, 0, 0, &err_msg);
+    
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "SQL error: %s\n", err_msg);
+        sqlite3_free(err_msg);
+    } else {
+        printf("All orders reset.\n");
     }
-    printf("Orders reset.\n");
-    print_orders();
 }
 
+// Main function to initialize orders
 int main() {
-    initialize_orders(); // Ensure this works correctly
+    initialize_orders();
     return 0;
 }
