@@ -4,6 +4,7 @@
 
 sqlite3 *db;
 
+
 // Function to initialize the SQLite database and create the orders table if it doesn't exist
 void initialize_orders() {
     int rc = sqlite3_open("order_statuses.db", &db);
